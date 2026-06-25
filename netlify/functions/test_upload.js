@@ -48,19 +48,21 @@ exports.handler = async () => {
   const testFile = Buffer.from("Hello World from ASCloud Netlify test");
   const results = {};
 
-  // Test Pixeldrain
+  // Test Litterbox
   try {
     const mp = buildMultipart([
+      { name: "reqtype", value: "fileupload" },
+      { name: "time", value: "24h" },
       {
-        name: "file",
+        name: "fileToUpload",
         file: testFile,
         filename: "test.txt",
         contentType: "text/plain",
       },
     ]);
-    results.pixeldrain = await requestHTTPS({
-      hostname: "pixeldrain.com",
-      path: "/api/file/",
+    results.litterbox = await requestHTTPS({
+      hostname: "litterbox.catbox.moe",
+      path: "/ounce.php",
       method: "POST",
       headers: {
         "Content-Type": mp.contentType,
@@ -69,7 +71,7 @@ exports.handler = async () => {
       }
     }, mp.body);
   } catch (err) {
-    results.pixeldrain_error = err.message;
+    results.litterbox_error = err.message;
   }
 
   return {
