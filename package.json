@@ -1,6 +1,6 @@
 {
-  "name": "nethost",
-  "version": "1.0.0",
-  "description": "File proxy endpoint - mirrors files.catbox.moe on your own domain via Netlify",
+  "name": "ascloud",
+  "version": "2.0.0",
+  "description": "AS Cloud — Swiss-Engineered Cloud Hosting. Upload, host, and share files with direct links.",
   "private": true
 }

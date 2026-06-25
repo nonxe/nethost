@@ -1,3 +1,1025 @@
-<!-- This file exists so Netlify has a publish directory. All requests are routed through the proxy function. -->
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>NetHost</title></head><body></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AS Cloud · Swiss-Engineered Cloud Hosting</title>
+  <meta name="description" content="Upload, host, and share your files with Swiss precision. Fast, secure, and private cloud hosting with direct links.">
+  <meta property="og:title" content="AS Cloud · Swiss-Engineered Cloud Hosting">
+  <meta property="og:description" content="Upload any file. Get a direct link. Swiss privacy, zero ads.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23dc2626'/><rect x='38' y='20' width='24' height='60' rx='4' fill='white'/><rect x='20' y='38' width='60' height='24' rx='4' fill='white'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #050507;
+      --bg-secondary: #0a0a10;
+      --surface: rgba(255,255,255,0.025);
+      --surface-border: rgba(255,255,255,0.06);
+      --surface-hover: rgba(255,255,255,0.045);
+      --accent: #dc2626;
+      --accent-light: #f87171;
+      --accent-glow: rgba(220,38,38,0.12);
+      --accent-soft: rgba(220,38,38,0.06);
+      --text: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #52525b;
+      --success: #22c55e;
+      --success-bg: rgba(34,197,94,0.08);
+      --error: #ef4444;
+      --error-bg: rgba(239,68,68,0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Ambient Background ── */
+    .ambient {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ambient .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.4;
+    }
+    .ambient .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(220,38,38,0.08) 0%, transparent 70%);
+      top: -10%; left: -5%;
+      animation: orbFloat 25s ease-in-out infinite alternate;
+    }
+    .ambient .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+      bottom: -10%; right: -5%;
+      animation: orbFloat 30s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes orbFloat {
+      from { transform: translate(0, 0) scale(1); }
+      to { transform: translate(40px, 30px) scale(1.1); }
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 720px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ── Navbar ── */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(5,5,7,0.7);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none;
+    }
+    .swiss-cross {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 6px;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px var(--accent-glow);
+      flex-shrink: 0;
+    }
+    .cross-h, .cross-v {
+      position: absolute;
+      background: white;
+      border-radius: 1.5px;
+    }
+    .cross-h { width: 16px; height: 5px; }
+    .cross-v { width: 5px; height: 16px; }
+    .brand-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--text);
+    }
+    .nav-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      border: 1px solid var(--surface-border);
+      border-radius: 100px;
+      text-transform: uppercase;
+    }
+    .nav-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(34,197,94,0.4);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 80px 0 48px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #e63946 0%, #f87171 40%, #fca5a5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      line-height: 1.6;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ── Glass Card ── */
+    .glass {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* ── Upload Card ── */
+    .upload-card {
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+    .tab-btn:hover { color: var(--text-secondary); }
+    .tab-btn.active {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Drop Zone ── */
+    .dropzone {
+      border: 2px dashed rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+    }
+    .dropzone:hover {
+      border-color: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.01);
+    }
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      transform: scale(1.01);
+    }
+    .dropzone-icon {
+      margin: 0 auto 16px;
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dropzone-icon svg {
+      width: 28px; height: 28px;
+      color: var(--text-secondary);
+    }
+    .dropzone-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .dropzone-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── File Preview ── */
+    .file-preview {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      margin-top: 20px;
+      animation: slideIn 0.3s ease-out;
+    }
+    .file-preview.show { display: flex; }
+    .file-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .file-meta { flex: 1; min-width: 0; }
+    .file-meta .name {
+      font-size: 0.85rem; font-weight: 500; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .file-meta .size { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .file-remove {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .file-remove:hover { border-color: var(--error); color: var(--error); background: var(--error-bg); }
+
+    /* ── Upload Button ── */
+    .upload-btn {
+      width: 100%;
+      padding: 14px 24px;
+      margin-top: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+      transition: all var(--transition);
+      box-shadow: 0 4px 20px rgba(220,38,38,0.25);
+    }
+    .upload-btn:hover { background: #b91c1c; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(220,38,38,0.35); }
+    .upload-btn:active { transform: translateY(0); }
+    .upload-btn:disabled {
+      opacity: 0.5; cursor: not-allowed; transform: none;
+      box-shadow: none;
+    }
+    .upload-btn.show { display: flex; }
+
+    /* ── URL Input ── */
+    .url-group { display: flex; flex-direction: column; gap: 14px; }
+    .url-input {
+      width: 100%;
+      padding: 14px 18px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .url-input::placeholder { color: var(--text-muted); }
+    .url-input:focus { border-color: var(--accent); }
+    .url-upload-btn {
+      padding: 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition);
+      box-shadow: 0 4px 20px rgba(220,38,38,0.25);
+    }
+    .url-upload-btn:hover { background: #b91c1c; }
+    .url-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Progress ── */
+    .progress-container {
+      display: none;
+      margin-top: 24px;
+      animation: slideIn 0.3s ease-out;
+    }
+    .progress-container.show { display: block; }
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      border-radius: 2px;
+      animation: indeterminate 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes indeterminate {
+      0% { transform: translateX(-100%); width: 30%; }
+      50% { width: 50%; }
+      100% { transform: translateX(350%); width: 30%; }
+    }
+    .progress-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* ── Result Card ── */
+    .result-card {
+      display: none;
+      padding: 36px 32px;
+      margin-bottom: 24px;
+      text-align: center;
+      animation: slideUp 0.5s ease-out;
+    }
+    .result-card.show { display: block; }
+    .success-ring {
+      width: 64px; height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: var(--success-bg);
+      border: 2px solid var(--success);
+      display: flex; align-items: center; justify-content: center;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .success-ring svg { color: var(--success); width: 28px; height: 28px; }
+    @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .result-title {
+      font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; color: var(--text);
+    }
+    .result-url-row {
+      display: flex; gap: 8px; margin-bottom: 20px;
+    }
+    .result-url-input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      font-family: 'Inter', monospace;
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xs);
+      outline: none;
+      min-width: 0;
+    }
+    .copy-btn {
+      padding: 12px 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition);
+      display: flex; align-items: center; gap: 6px;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.1); }
+    .copy-btn.copied { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+    .another-btn {
+      padding: 10px 24px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: none;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition);
+    }
+    .another-btn:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      padding: 14px 20px;
+      margin-top: 20px;
+      background: var(--error-bg);
+      border: 1px solid rgba(239,68,68,0.15);
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      color: var(--error);
+      text-align: center;
+      animation: slideIn 0.3s ease-out;
+    }
+    .error-msg.show { display: block; }
+
+    /* ── History ── */
+    .history-section {
+      display: none;
+      margin-bottom: 32px;
+    }
+    .history-section.show { display: block; }
+    .history-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .history-title {
+      font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .history-clear {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: none; border: none;
+      cursor: pointer; font-family: inherit;
+      transition: color var(--transition);
+    }
+    .history-clear:hover { color: var(--error); }
+    .history-list { display: flex; flex-direction: column; gap: 6px; }
+    .history-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      transition: background var(--transition);
+    }
+    .history-item:hover { background: var(--surface-hover); }
+    .history-item .h-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .history-item .h-info { flex: 1; min-width: 0; }
+    .history-item .h-name {
+      font-size: 0.8rem; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .history-item .h-size {
+      font-size: 0.7rem; color: var(--text-muted); margin-top: 1px;
+    }
+    .history-item .h-copy {
+      padding: 6px 12px;
+      font-size: 0.72rem; font-weight: 500;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius-xs);
+      cursor: pointer; font-family: inherit;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .history-item .h-copy:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+    /* ── Features ── */
+    .features {
+      padding: 48px 0 64px;
+    }
+    .features-label {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .feature-card {
+      padding: 24px;
+      transition: all var(--transition);
+    }
+    .feature-card:hover {
+      background: var(--surface-hover);
+      border-color: rgba(255,255,255,0.08);
+    }
+    .feature-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .feature-icon svg { width: 20px; height: 20px; color: var(--accent-light); }
+    .feature-card h4 {
+      font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; color: var(--text);
+    }
+    .feature-card p {
+      font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid rgba(255,255,255,0.04);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .footer-brand {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .footer .swiss-cross {
+      width: 18px; height: 18px; border-radius: 4px;
+      box-shadow: none;
+    }
+    .footer .swiss-cross .cross-h { width: 10px; height: 3px; }
+    .footer .swiss-cross .cross-v { width: 3px; height: 10px; }
+    .footer-brand span {
+      font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+    .footer-location {
+      font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px;
+    }
+    .footer-copy {
+      font-size: 0.68rem; color: var(--text-muted);
+    }
+
+    /* ── Animations ── */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .fade-in { animation: fadeIn 0.6s ease-out; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .hero { padding: 56px 0 32px; }
+      .upload-card { padding: 20px; }
+      .result-card { padding: 24px 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .result-url-row { flex-direction: column; }
+      .nav-badge { display: none; }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Background -->
+  <div class="ambient">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/" class="nav-brand">
+      <div class="swiss-cross"><span class="cross-h"></span><span class="cross-v"></span></div>
+      <span class="brand-name">AS CLOUD</span>
+    </a>
+    <div class="nav-badge">Operational</div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Hero -->
+    <section class="hero fade-in">
+      <h1>Cloud Hosting,<br><span class="gradient-text">Swiss Precision.</span></h1>
+      <p class="hero-sub">Upload any file. Get a permanent direct link. No ads, no waiting — just Swiss-engineered reliability.</p>
+    </section>
+
+    <!-- Upload Card -->
+    <div class="upload-card glass fade-in" id="upload-card">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="file">Upload File</button>
+        <button class="tab-btn" data-tab="url">From URL</button>
+      </div>
+
+      <!-- File Tab -->
+      <div class="tab-panel active" id="file-panel">
+        <div class="dropzone" id="dropzone">
+          <div class="dropzone-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V8m0 0l-3 3m3-3l3 3"/>
+              <path d="M20 16.74A5.5 5.5 0 0016.5 7a5.96 5.96 0 00-1.04-3.3A6.5 6.5 0 002 10.5C2 12.57 2.84 14.44 4.19 15.79"/>
+            </svg>
+          </div>
+          <p class="dropzone-text">Drag & drop your file here</p>
+          <p class="dropzone-sub">or click to browse · any file type</p>
+          <input type="file" id="file-input" hidden>
+        </div>
+
+        <!-- File Preview -->
+        <div class="file-preview" id="file-preview">
+          <span class="file-icon" id="file-icon">📎</span>
+          <div class="file-meta">
+            <div class="name" id="file-name"></div>
+            <div class="size" id="file-size"></div>
+          </div>
+          <button class="file-remove" id="file-remove" title="Remove">×</button>
+        </div>
+
+        <!-- Upload Button -->
+        <button class="upload-btn" id="upload-btn" onclick="uploadSelectedFile()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+          Upload to AS Cloud
+        </button>
+      </div>
+
+      <!-- URL Tab -->
+      <div class="tab-panel" id="url-panel">
+        <div class="url-group">
+          <input type="url" class="url-input" id="url-input" placeholder="https://example.com/image.jpg">
+          <button class="url-upload-btn" id="url-upload-btn" onclick="uploadFromUrl()">
+            Upload from URL
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-container" id="progress">
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <p class="progress-text">Encrypting & uploading to Swiss servers...</p>
+      </div>
+
+      <!-- Error -->
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+
+    <!-- Result Card -->
+    <div class="result-card glass" id="result-card">
+      <div class="success-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <div class="result-title">File Hosted Successfully</div>
+      <div class="result-url-row">
+        <input type="text" class="result-url-input" id="result-url" readonly>
+        <button class="copy-btn" id="copy-btn" onclick="copyUrl()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy
+        </button>
+      </div>
+      <button class="another-btn" onclick="resetUpload()">Upload Another File</button>
+    </div>
+
+    <!-- Upload History -->
+    <div class="history-section" id="history-section">
+      <div class="history-header">
+        <span class="history-title">Recent Uploads</span>
+        <button class="history-clear" onclick="clearHistory()">Clear All</button>
+      </div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+
+    <!-- Features -->
+    <section class="features">
+      <div class="features-label">Why AS Cloud</div>
+      <div class="features-grid">
+        <div class="feature-card glass">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h4>Swiss Privacy</h4>
+          <p>Backed by Swiss data protection standards. Your files remain private and secure.</p>
+        </div>
+        <div class="feature-card glass">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <h4>Instant Delivery</h4>
+          <p>Global edge network ensures your files load instantly, anywhere in the world.</p>
+        </div>
+        <div class="feature-card glass">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <h4>Direct Links</h4>
+          <p>Clean, permanent URLs. No interstitial pages, no advertisements, no tracking.</p>
+        </div>
+        <div class="feature-card glass">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          </div>
+          <h4>Any Format</h4>
+          <p>Images, videos, audio, documents, archives — upload anything, we host it all.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-brand">
+      <div class="swiss-cross"><span class="cross-h"></span><span class="cross-v"></span></div>
+      <span>AS CLOUD AG</span>
+    </div>
+    <p class="footer-location">Zurich, Switzerland · Engineered for reliability</p>
+    <p class="footer-copy">&copy; 2026 AS Cloud AG. All rights reserved.</p>
+  </footer>
+
+  <script>
+    /* ── State ── */
+    let selectedFile = null;
+
+    /* ── Elements ── */
+    const $ = (id) => document.getElementById(id);
+    const dropzone = $('dropzone');
+    const fileInput = $('file-input');
+    const filePreview = $('file-preview');
+    const uploadBtn = $('upload-btn');
+    const progress = $('progress');
+    const errorMsg = $('error-msg');
+    const resultCard = $('result-card');
+    const uploadCard = $('upload-card');
+    const resultUrl = $('result-url');
+    const copyBtn = $('copy-btn');
+
+    /* ── Tabs ── */
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        $(btn.dataset.tab + '-panel').classList.add('active');
+      });
+    });
+
+    /* ── Drag & Drop ── */
+    ['dragenter', 'dragover'].forEach(e => {
+      dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(e => {
+      dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('dragover'); });
+    });
+    dropzone.addEventListener('drop', ev => {
+      if (ev.dataTransfer.files.length) handleFile(ev.dataTransfer.files[0]);
+    });
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', ev => {
+      if (ev.target.files.length) handleFile(ev.target.files[0]);
+    });
+
+    /* ── File Remove ── */
+    $('file-remove').addEventListener('click', () => {
+      selectedFile = null;
+      filePreview.classList.remove('show');
+      uploadBtn.classList.remove('show');
+      fileInput.value = '';
+    });
+
+    /* ── File Handling ── */
+    function handleFile(file) {
+      selectedFile = file;
+      $('file-icon').textContent = getFileIcon(file.name);
+      $('file-name').textContent = file.name;
+      $('file-size').textContent = formatSize(file.size);
+      filePreview.classList.add('show');
+      uploadBtn.classList.add('show');
+      hideError();
+    }
+
+    async function uploadSelectedFile() {
+      if (!selectedFile) return;
+      setUploading(true);
+      try {
+        const resp = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': selectedFile.type || 'application/octet-stream',
+            'X-Filename': encodeURIComponent(selectedFile.name),
+          },
+          body: selectedFile,
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ error: 'Upload failed' }));
+          throw new Error(err.error || `Server error ${resp.status}`);
+        }
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'Upload failed');
+        showResult(data.url);
+        saveHistory({ url: data.url, name: selectedFile.name, size: selectedFile.size, time: Date.now() });
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    async function uploadFromUrl() {
+      const url = $('url-input').value.trim();
+      if (!url) { showError('Please enter a valid URL'); return; }
+      setUploading(true);
+      try {
+        const resp = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ error: 'Upload failed' }));
+          throw new Error(err.error || `Server error ${resp.status}`);
+        }
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'Upload failed');
+        const fname = url.split('/').pop() || data.filename;
+        showResult(data.url);
+        saveHistory({ url: data.url, name: fname, size: null, time: Date.now() });
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    /* ── UI Helpers ── */
+    function setUploading(loading) {
+      progress.classList.toggle('show', loading);
+      uploadBtn.disabled = loading;
+      $('url-upload-btn').disabled = loading;
+      if (loading) hideError();
+    }
+
+    function showResult(url) {
+      resultUrl.value = url;
+      uploadCard.style.display = 'none';
+      resultCard.classList.add('show');
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('show');
+    }
+
+    function hideError() {
+      errorMsg.classList.remove('show');
+    }
+
+    function resetUpload() {
+      selectedFile = null;
+      fileInput.value = '';
+      $('url-input').value = '';
+      filePreview.classList.remove('show');
+      uploadBtn.classList.remove('show');
+      progress.classList.remove('show');
+      resultCard.classList.remove('show');
+      uploadCard.style.display = 'block';
+      hideError();
+    }
+
+    function copyUrl() {
+      navigator.clipboard.writeText(resultUrl.value).then(() => {
+        copyBtn.classList.add('copied');
+        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Copied!';
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
+        }, 2000);
+      });
+    }
+
+    /* ── History ── */
+    function getHistory() {
+      try { return JSON.parse(localStorage.getItem('ascloud_history') || '[]'); }
+      catch { return []; }
+    }
+
+    function saveHistory(entry) {
+      const history = getHistory();
+      history.unshift(entry);
+      if (history.length > 20) history.length = 20;
+      localStorage.setItem('ascloud_history', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('ascloud_history');
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = getHistory();
+      const section = $('history-section');
+      const list = $('history-list');
+
+      if (!history.length) { section.classList.remove('show'); return; }
+      section.classList.add('show');
+
+      list.innerHTML = history.map(h => `
+        <div class="history-item">
+          <span class="h-icon">${getFileIcon(h.name)}</span>
+          <div class="h-info">
+            <div class="h-name">${escapeHtml(h.name)}</div>
+            <div class="h-size">${h.size ? formatSize(h.size) : 'URL upload'} · ${timeAgo(h.time)}</div>
+          </div>
+          <button class="h-copy" onclick="copyText('${escapeHtml(h.url)}', this)">Copy URL</button>
+        </div>
+      `).join('');
+    }
+
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy URL'; }, 1500);
+      });
+    }
+
+    /* ── Utilities ── */
+    function getFileIcon(name) {
+      const ext = (name || '').split('.').pop().toLowerCase();
+      const map = {
+        jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',bmp:'🖼️',ico:'🖼️',
+        mp4:'🎬',webm:'🎬',mkv:'🎬',avi:'🎬',mov:'🎬',flv:'🎬',
+        mp3:'🎵',wav:'🎵',flac:'🎵',ogg:'🎵',aac:'🎵',m4a:'🎵',
+        pdf:'📄',doc:'📄',docx:'📄',txt:'📄',rtf:'📄',
+        zip:'📦',rar:'📦','7z':'📦',tar:'📦',gz:'📦',
+        js:'💻',py:'💻',html:'💻',css:'💻',json:'💻',
+        apk:'📱',exe:'⚙️',dmg:'💿',iso:'💿',
+      };
+      return map[ext] || '📎';
+    }
+
+    function formatSize(bytes) {
+      if (!bytes) return '0 B';
+      const units = ['B','KB','MB','GB'];
+      let i = 0, size = bytes;
+      while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+      return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+
+    function timeAgo(ts) {
+      const diff = Date.now() - ts;
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + 'm ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      const days = Math.floor(hrs / 24);
+      return days + 'd ago';
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    /* ── Init ── */
+    renderHistory();
+  </script>
+</body>
+</html>
