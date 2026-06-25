@@ -785,14 +785,13 @@
           },
           body: selectedFile,
         });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({ error: 'Upload failed' }));
-          throw new Error(err.error || `Server error ${resp.status}`);
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok || !data || !data.success) {
+          const msg = data ? (data.error || 'Upload failed') : `Server error ${resp.status}`;
+          const detail = data && data.response ? '\n' + data.response : '';
+          throw new Error(msg + detail);
         }
-        const data = await resp.json();
-        if (!data.success) throw new Error(data.error || 'Upload failed');
         showResult(data.url);
-
       } catch (err) {
         showError(err.message);
       } finally {
@@ -810,15 +809,13 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url }),
         });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({ error: 'Upload failed' }));
-          throw new Error(err.error || `Server error ${resp.status}`);
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok || !data || !data.success) {
+          const msg = data ? (data.error || 'Upload failed') : `Server error ${resp.status}`;
+          const detail = data && data.response ? '\n' + data.response : '';
+          throw new Error(msg + detail);
         }
-        const data = await resp.json();
-        if (!data.success) throw new Error(data.error || 'Upload failed');
-        const fname = url.split('/').pop() || data.filename;
         showResult(data.url);
-
       } catch (err) {
         showError(err.message);
       } finally {
