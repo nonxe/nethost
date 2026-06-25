@@ -1,44 +1,53 @@
-const CATBOX_OFFICIAL = "https://catbox.moe/user/api.php";
-const CATBOX_WRAPPER = "https://apis.davidcyril.name.ng/uploader/catbox";
+const CATBOX_API = "https://catbox.moe/user/api.php";
 
 /**
- * Try to extract a catbox URL from the API response text.
- * Returns the clean filename or throws on failure.
+ * Manually build multipart/form-data body — avoids Node.js
+ * FormData/Blob compatibility issues in serverless environments.
  */
-function extractFilename(responseText) {
-  // 1. Try regex match for a catbox URL anywhere in the response
-  const match = responseText.match(
-    /https?:\/\/files\.catbox\.moe\/([A-Za-z0-9_\-]+\.[A-Za-z0-9]+)/
-  );
-  if (match) return match[1];
+function buildMultipart(fields) {
+  const boundary =
+    "----ASCloudBoundary" + Math.random().toString(36).slice(2);
+  const chunks = [];
 
-  // 2. If the entire response is a clean URL
-  const trimmed = responseText.trim();
-  if (
-    trimmed.startsWith("http") &&
-    !trimmed.includes("<") &&
-    trimmed.includes("/")
-  ) {
-    return trimmed.split("/").pop();
+  for (const field of fields) {
+    if (field.file) {
+      chunks.push(
+        Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="${field.name}"; filename="${field.filename}"\r\nContent-Type: ${field.contentType}\r\n\r\n`
+        )
+      );
+      chunks.push(field.file); // Buffer
+      chunks.push(Buffer.from("\r\n"));
+    } else {
+      chunks.push(
+        Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="${field.name}"\r\n\r\n${field.value}\r\n`
+        )
+      );
+    }
   }
 
+  chunks.push(Buffer.from(`--${boundary}--\r\n`));
+  return {
+    body: Buffer.concat(chunks),
+    contentType: `multipart/form-data; boundary=${boundary}`,
+  };
+}
+
+/**
+ * Extract the catbox filename from API response.
+ */
+function extractFilename(text) {
+  const m = text.match(
+    /https?:\/\/files\.catbox\.moe\/([A-Za-z0-9_\-]+\.[A-Za-z0-9]+)/
+  );
+  if (m) return m[1];
+
+  const t = text.trim();
+  if (t.startsWith("http") && !t.includes("<") && t.includes("/")) {
+    return t.split("/").pop();
+  }
   return null;
-}
-
-/**
- * Upload to catbox using the official API.
- */
-async function uploadOfficial(formData) {
-  const r = await fetch(CATBOX_OFFICIAL, { method: "POST", body: formData });
-  return (await r.text()).trim();
-}
-
-/**
- * Upload to catbox using the wrapper API (fallback).
- */
-async function uploadWrapper(formData) {
-  const r = await fetch(CATBOX_WRAPPER, { method: "POST", body: formData });
-  return (await r.text()).trim();
 }
 
 exports.handler = async (event) => {
@@ -80,20 +89,18 @@ exports.handler = async (event) => {
         };
       }
 
-      // Try official API
-      const fd1 = new FormData();
-      fd1.append("reqtype", "urlupload");
-      fd1.append("url", url);
-      let resp = await uploadOfficial(fd1);
-      filename = extractFilename(resp);
+      const mp = buildMultipart([
+        { name: "reqtype", value: "urlupload" },
+        { name: "url", value: url },
+      ]);
 
-      // Fallback to wrapper
-      if (!filename) {
-        const fd2 = new FormData();
-        fd2.append("url", url);
-        resp = await uploadWrapper(fd2);
-        filename = extractFilename(resp);
-      }
+      const r = await fetch(CATBOX_API, {
+        method: "POST",
+        headers: { "Content-Type": mp.contentType },
+        body: mp.body,
+      });
+      const resp = (await r.text()).trim();
+      filename = extractFilename(resp);
     } else {
       /* ── File Upload ── */
       const uploadName = decodeURIComponent(
@@ -105,22 +112,24 @@ exports.handler = async (event) => {
         event.body,
         event.isBase64Encoded ? "base64" : "binary"
       );
-      const blob = new Blob([buf], { type: ct || "application/octet-stream" });
 
-      // Try official API (field: fileToUpload)
-      const fd1 = new FormData();
-      fd1.append("reqtype", "fileupload");
-      fd1.append("fileToUpload", blob, uploadName);
-      let resp = await uploadOfficial(fd1);
+      const mp = buildMultipart([
+        { name: "reqtype", value: "fileupload" },
+        {
+          name: "fileToUpload",
+          file: buf,
+          filename: uploadName,
+          contentType: ct || "application/octet-stream",
+        },
+      ]);
+
+      const r = await fetch(CATBOX_API, {
+        method: "POST",
+        headers: { "Content-Type": mp.contentType },
+        body: mp.body,
+      });
+      const resp = (await r.text()).trim();
       filename = extractFilename(resp);
-
-      // Fallback to wrapper (field: file)
-      if (!filename) {
-        const fd2 = new FormData();
-        fd2.append("file", blob, uploadName);
-        resp = await uploadWrapper(fd2);
-        filename = extractFilename(resp);
-      }
     }
 
     if (!filename) {

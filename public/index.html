@@ -463,59 +463,6 @@
     }
     .error-msg.show { display: block; }
 
-    /* ── History ── */
-    .history-section {
-      display: none;
-      margin-bottom: 32px;
-    }
-    .history-section.show { display: block; }
-    .history-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .history-title {
-      font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    .history-clear {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      background: none; border: none;
-      cursor: pointer; font-family: inherit;
-      transition: color var(--transition);
-    }
-    .history-clear:hover { color: var(--error); }
-    .history-list { display: flex; flex-direction: column; gap: 6px; }
-    .history-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 16px;
-      background: var(--surface);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-sm);
-      transition: background var(--transition);
-    }
-    .history-item:hover { background: var(--surface-hover); }
-    .history-item .h-icon { font-size: 1.1rem; flex-shrink: 0; }
-    .history-item .h-info { flex: 1; min-width: 0; }
-    .history-item .h-name {
-      font-size: 0.8rem; color: var(--text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .history-item .h-size {
-      font-size: 0.7rem; color: var(--text-muted); margin-top: 1px;
-    }
-    .history-item .h-copy {
-      padding: 6px 12px;
-      font-size: 0.72rem; font-weight: 500;
-      color: var(--text-secondary);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: var(--radius-xs);
-      cursor: pointer; font-family: inherit;
-      transition: all var(--transition);
-      white-space: nowrap;
-    }
-    .history-item .h-copy:hover { background: rgba(255,255,255,0.08); color: var(--text); }
 
     /* ── Features ── */
     .features {
@@ -717,14 +664,7 @@
       <button class="another-btn" onclick="resetUpload()">Upload Another File</button>
     </div>
 
-    <!-- Upload History -->
-    <div class="history-section" id="history-section">
-      <div class="history-header">
-        <span class="history-title">Recent Uploads</span>
-        <button class="history-clear" onclick="clearHistory()">Clear All</button>
-      </div>
-      <div class="history-list" id="history-list"></div>
-    </div>
+
 
     <!-- Features -->
     <section class="features">
@@ -852,7 +792,7 @@
         const data = await resp.json();
         if (!data.success) throw new Error(data.error || 'Upload failed');
         showResult(data.url);
-        saveHistory({ url: data.url, name: selectedFile.name, size: selectedFile.size, time: Date.now() });
+
       } catch (err) {
         showError(err.message);
       } finally {
@@ -878,7 +818,7 @@
         if (!data.success) throw new Error(data.error || 'Upload failed');
         const fname = url.split('/').pop() || data.filename;
         showResult(data.url);
-        saveHistory({ url: data.url, name: fname, size: null, time: Date.now() });
+
       } catch (err) {
         showError(err.message);
       } finally {
@@ -932,67 +872,7 @@
       });
     }
 
-    /* ── History ── */
-    function getHistory() {
-      try { return JSON.parse(localStorage.getItem('ascloud_history') || '[]'); }
-      catch { return []; }
-    }
-
-    function saveHistory(entry) {
-      const history = getHistory();
-      history.unshift(entry);
-      if (history.length > 20) history.length = 20;
-      localStorage.setItem('ascloud_history', JSON.stringify(history));
-      renderHistory();
-    }
-
-    function clearHistory() {
-      localStorage.removeItem('ascloud_history');
-      renderHistory();
-    }
-
-    function renderHistory() {
-      const history = getHistory();
-      const section = $('history-section');
-      const list = $('history-list');
-
-      if (!history.length) { section.classList.remove('show'); return; }
-      section.classList.add('show');
-
-      list.innerHTML = history.map(h => `
-        <div class="history-item">
-          <span class="h-icon">${getFileIcon(h.name)}</span>
-          <div class="h-info">
-            <div class="h-name">${escapeHtml(h.name)}</div>
-            <div class="h-size">${h.size ? formatSize(h.size) : 'URL upload'} · ${timeAgo(h.time)}</div>
-          </div>
-          <button class="h-copy" onclick="copyText('${escapeHtml(h.url)}', this)">Copy URL</button>
-        </div>
-      `).join('');
-    }
-
-    function copyText(text, btn) {
-      navigator.clipboard.writeText(text).then(() => {
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = 'Copy URL'; }, 1500);
-      });
-    }
-
     /* ── Utilities ── */
-    function getFileIcon(name) {
-      const ext = (name || '').split('.').pop().toLowerCase();
-      const map = {
-        jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',bmp:'🖼️',ico:'🖼️',
-        mp4:'🎬',webm:'🎬',mkv:'🎬',avi:'🎬',mov:'🎬',flv:'🎬',
-        mp3:'🎵',wav:'🎵',flac:'🎵',ogg:'🎵',aac:'🎵',m4a:'🎵',
-        pdf:'📄',doc:'📄',docx:'📄',txt:'📄',rtf:'📄',
-        zip:'📦',rar:'📦','7z':'📦',tar:'📦',gz:'📦',
-        js:'💻',py:'💻',html:'💻',css:'💻',json:'💻',
-        apk:'📱',exe:'⚙️',dmg:'💿',iso:'💿',
-      };
-      return map[ext] || '📎';
-    }
-
     function formatSize(bytes) {
       if (!bytes) return '0 B';
       const units = ['B','KB','MB','GB'];
@@ -1000,26 +880,6 @@
       while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
       return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
     }
-
-    function timeAgo(ts) {
-      const diff = Date.now() - ts;
-      const mins = Math.floor(diff / 60000);
-      if (mins < 1) return 'just now';
-      if (mins < 60) return mins + 'm ago';
-      const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return hrs + 'h ago';
-      const days = Math.floor(hrs / 24);
-      return days + 'd ago';
-    }
-
-    function escapeHtml(s) {
-      const d = document.createElement('div');
-      d.textContent = s || '';
-      return d.innerHTML;
-    }
-
-    /* ── Init ── */
-    renderHistory();
   </script>
 </body>
 </html>
