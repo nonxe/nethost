@@ -48,7 +48,7 @@ exports.handler = async () => {
   const testFile = Buffer.from("Hello World from ASCloud Netlify test");
   const results = {};
 
-  // Test Fileditch
+  // Test Pixeldrain
   try {
     const mp = buildMultipart([
       {
@@ -58,9 +58,9 @@ exports.handler = async () => {
         contentType: "text/plain",
       },
     ]);
-    results.fileditch = await requestHTTPS({
-      hostname: "new.fileditch.com",
-      path: "/upload.php",
+    results.pixeldrain = await requestHTTPS({
+      hostname: "pixeldrain.com",
+      path: "/api/file/",
       method: "POST",
       headers: {
         "Content-Type": mp.contentType,
@@ -69,31 +69,7 @@ exports.handler = async () => {
       }
     }, mp.body);
   } catch (err) {
-    results.fileditch_error = err.message;
-  }
-
-  // Test Tmpfiles.org
-  try {
-    const mp = buildMultipart([
-      {
-        name: "file",
-        file: testFile,
-        filename: "test.txt",
-        contentType: "text/plain",
-      },
-    ]);
-    results.tmpfiles = await requestHTTPS({
-      hostname: "tmpfiles.org",
-      path: "/api/v1/upload",
-      method: "POST",
-      headers: {
-        "Content-Type": mp.contentType,
-        "Content-Length": mp.body.length,
-        "User-Agent": "ASCloud/2.0",
-      }
-    }, mp.body);
-  } catch (err) {
-    results.tmpfiles_error = err.message;
+    results.pixeldrain_error = err.message;
   }
 
   return {
