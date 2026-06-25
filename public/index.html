@@ -594,24 +594,45 @@
   <script>
     (function() {
       const blockScreen = document.getElementById('block-screen');
-      fetch('https://ipapi.co/country/')
-        .then(res => res.text())
-        .then(country => {
-          if (country && country.trim() !== 'IN') {
+      
+      function checkCountry(countryCode) {
+        if (countryCode && typeof countryCode === 'string') {
+          const code = countryCode.trim().toUpperCase();
+          // Check that it's a valid 2-letter country code
+          if (code.length === 2 && code !== 'IN') {
             blockScreen.style.display = 'flex';
             document.body.style.overflow = 'hidden';
           }
+        }
+      }
+
+      // Try country.is first (extremely fast, Cloudflare-backed, CORS enabled)
+      fetch('https://api.country.is')
+        .then(res => {
+          if (!res.ok) throw new Error('status ' + res.status);
+          return res.json();
         })
-        .catch(() => {
-          fetch('https://ip-api.com/json/')
-            .then(res => res.json())
+        .then(data => {
+          if (data && data.country) {
+            checkCountry(data.country);
+          }
+        })
+        .catch(err => {
+          console.warn('Primary GeoIP failed, trying fallback:', err.message);
+          // Fallback to ipapi.co JSON API (much safer than plain text endpoint)
+          fetch('https://ipapi.co/json/')
+            .then(res => {
+              if (!res.ok) throw new Error('status ' + res.status);
+              return res.json();
+            })
             .then(data => {
-              if (data && data.countryCode && data.countryCode !== 'IN') {
-                blockScreen.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
+              if (data && data.country_code) {
+                checkCountry(data.country_code);
               }
             })
-            .catch(() => {});
+            .catch(err2 => {
+              console.warn('Fallback GeoIP failed:', err2.message);
+            });
         });
     })();
   </script>
