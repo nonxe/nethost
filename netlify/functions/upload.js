@@ -108,23 +108,39 @@ exports.handler = async (event) => {
     let rawResponse;
 
     if (ct.includes("application/json")) {
-      /* ── URL Upload ── */
-      const { url } = JSON.parse(event.body);
-      if (!url) {
+      const payload = JSON.parse(event.body || "{}");
+      if (payload.url) {
+        /* ── URL Upload ── */
+        const mp = buildMultipart([
+          { name: "reqtype", value: "urlupload" },
+          { name: "userhash", value: "" },
+          { name: "url", value: payload.url },
+        ]);
+        rawResponse = await catboxRequest(mp.body, mp.contentType);
+      } else if (payload.fileData) {
+        /* ── Base64 File Upload ── */
+        const uploadName = payload.filename || "upload.bin";
+        const buf = Buffer.from(payload.fileData, "base64");
+        const mp = buildMultipart([
+          { name: "reqtype", value: "fileupload" },
+          { name: "userhash", value: "" },
+          {
+            name: "fileToUpload",
+            file: buf,
+            filename: uploadName,
+            contentType: payload.contentType || "application/octet-stream",
+          },
+        ]);
+        rawResponse = await catboxRequest(mp.body, mp.contentType);
+      } else {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: "No URL provided" }),
+          body: JSON.stringify({ error: "Missing url or fileData" }),
         };
       }
-      const mp = buildMultipart([
-        { name: "reqtype", value: "urlupload" },
-        { name: "userhash", value: "" },
-        { name: "url", value: url },
-      ]);
-      rawResponse = await catboxRequest(mp.body, mp.contentType);
     } else {
-      /* ── File Upload ── */
+      /* ── Raw File Upload Fallback ── */
       const uploadName = decodeURIComponent(
         event.headers["x-filename"] ||
           event.headers["X-Filename"] ||

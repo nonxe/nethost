@@ -214,6 +214,7 @@
 
     /* ── Drop Zone ── */
     .dropzone {
+      display: block;
       border: 2px dashed rgba(255,255,255,0.08);
       border-radius: var(--radius);
       padding: 48px 24px;
@@ -599,7 +600,7 @@
 
       <!-- File Tab -->
       <div class="tab-panel active" id="file-panel">
-        <div class="dropzone" id="dropzone">
+        <label class="dropzone" id="dropzone" for="file-input">
           <div class="dropzone-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 16V8m0 0l-3 3m3-3l3 3"/>
@@ -608,8 +609,8 @@
           </div>
           <p class="dropzone-text">Drag & drop your file here</p>
           <p class="dropzone-sub">or click to browse · any file type</p>
-          <input type="file" id="file-input" hidden>
-        </div>
+        </label>
+        <input type="file" id="file-input" style="display: none;">
 
         <!-- File Preview -->
         <div class="file-preview" id="file-preview">
@@ -749,7 +750,6 @@
     dropzone.addEventListener('drop', ev => {
       if (ev.dataTransfer.files.length) handleFile(ev.dataTransfer.files[0]);
     });
-    dropzone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', ev => {
       if (ev.target.files.length) handleFile(ev.target.files[0]);
     });
@@ -773,17 +773,32 @@
       hideError();
     }
 
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
     async function uploadSelectedFile() {
       if (!selectedFile) return;
       setUploading(true);
       try {
+        const base64Data = await fileToBase64(selectedFile);
+        const base64String = base64Data.split(',')[1];
+        
         const resp = await fetch('/api/upload', {
           method: 'POST',
           headers: {
-            'Content-Type': selectedFile.type || 'application/octet-stream',
-            'X-Filename': encodeURIComponent(selectedFile.name),
+            'Content-Type': 'application/json',
           },
-          body: selectedFile,
+          body: JSON.stringify({
+            filename: selectedFile.name,
+            contentType: selectedFile.type || 'application/octet-stream',
+            fileData: base64String
+          }),
         });
         const data = await resp.json().catch(() => null);
         if (!resp.ok || !data || !data.success) {
