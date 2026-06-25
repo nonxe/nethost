@@ -113,7 +113,7 @@ exports.handler = async (event) => {
         /* ── URL Upload ── */
         const mp = buildMultipart([
           { name: "reqtype", value: "urlupload" },
-          { name: "userhash", value: "" },
+          { name: "userhash", value: process.env.CATBOX_USERHASH || "" },
           { name: "url", value: payload.url },
         ]);
         rawResponse = await catboxRequest(mp.body, mp.contentType);
@@ -123,7 +123,7 @@ exports.handler = async (event) => {
         const buf = Buffer.from(payload.fileData, "base64");
         const mp = buildMultipart([
           { name: "reqtype", value: "fileupload" },
-          { name: "userhash", value: "" },
+          { name: "userhash", value: process.env.CATBOX_USERHASH || "" },
           {
             name: "fileToUpload",
             file: buf,
@@ -152,7 +152,7 @@ exports.handler = async (event) => {
       );
       const mp = buildMultipart([
         { name: "reqtype", value: "fileupload" },
-        { name: "userhash", value: "" },
+        { name: "userhash", value: process.env.CATBOX_USERHASH || "" },
         {
           name: "fileToUpload",
           file: buf,
