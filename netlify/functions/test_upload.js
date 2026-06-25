@@ -1,8 +1,5 @@
 const https = require("https");
 
-const CATBOX_HOST = "catbox.moe";
-const CATBOX_PATH = "/user/api.php";
-
 function buildMultipart(fields) {
   const boundary = "ASCloud" + Math.random().toString(36).slice(2) + Date.now();
   const chunks = [];
@@ -51,7 +48,7 @@ exports.handler = async () => {
   const testFile = Buffer.from("Hello World from ASCloud Netlify test");
   const results = {};
 
-  // Test 0x0.st
+  // Test Fileditch
   try {
     const mp = buildMultipart([
       {
@@ -61,9 +58,9 @@ exports.handler = async () => {
         contentType: "text/plain",
       },
     ]);
-    results.st0x0 = await requestHTTPS({
-      hostname: "0x0.st",
-      path: "/",
+    results.fileditch = await requestHTTPS({
+      hostname: "new.fileditch.com",
+      path: "/upload.php",
       method: "POST",
       headers: {
         "Content-Type": mp.contentType,
@@ -72,33 +69,31 @@ exports.handler = async () => {
       }
     }, mp.body);
   } catch (err) {
-    results.st0x0_error = err.message;
+    results.fileditch_error = err.message;
   }
 
-  // Test Catbox
+  // Test Tmpfiles.org
   try {
-    const mp1 = buildMultipart([
-      { name: "reqtype", value: "fileupload" },
-      { name: "userhash", value: "" },
+    const mp = buildMultipart([
       {
-        name: "fileToUpload",
+        name: "file",
         file: testFile,
-        filename: "test1.txt",
+        filename: "test.txt",
         contentType: "text/plain",
       },
     ]);
-    results.catbox = await requestHTTPS({
-      hostname: CATBOX_HOST,
-      path: CATBOX_PATH,
+    results.tmpfiles = await requestHTTPS({
+      hostname: "tmpfiles.org",
+      path: "/api/v1/upload",
       method: "POST",
       headers: {
-        "Content-Type": mp1.contentType,
-        "Content-Length": mp1.body.length,
+        "Content-Type": mp.contentType,
+        "Content-Length": mp.body.length,
         "User-Agent": "ASCloud/2.0",
       }
-    }, mp1.body);
+    }, mp.body);
   } catch (err) {
-    results.catbox_error = err.message;
+    results.tmpfiles_error = err.message;
   }
 
   return {
