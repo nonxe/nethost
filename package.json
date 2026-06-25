@@ -1,0 +1,6 @@
+{
+  "name": "nethost",
+  "version": "1.0.0",
+  "description": "File proxy endpoint - mirrors files.catbox.moe on your own domain via Netlify",
+  "private": true
+}
