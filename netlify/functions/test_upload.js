@@ -48,11 +48,11 @@ exports.handler = async () => {
   const testFile = Buffer.from("Hello World from ASCloud Netlify test");
   const results = {};
 
-  // Test Litterbox
+  // Test Catbox via corsproxy.io
   try {
     const mp = buildMultipart([
       { name: "reqtype", value: "fileupload" },
-      { name: "time", value: "24h" },
+      { name: "userhash", value: "" },
       {
         name: "fileToUpload",
         file: testFile,
@@ -60,18 +60,20 @@ exports.handler = async () => {
         contentType: "text/plain",
       },
     ]);
-    results.litterbox = await requestHTTPS({
-      hostname: "litterbox.catbox.moe",
-      path: "/ounce.php",
+    
+    // corsproxy.io expects GET/POST request to https://corsproxy.io/?<url>
+    results.corsproxy = await requestHTTPS({
+      hostname: "corsproxy.io",
+      path: "/?https://catbox.moe/user/api.php",
       method: "POST",
       headers: {
         "Content-Type": mp.contentType,
         "Content-Length": mp.body.length,
-        "User-Agent": "ASCloud/2.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       }
     }, mp.body);
   } catch (err) {
-    results.litterbox_error = err.message;
+    results.corsproxy_error = err.message;
   }
 
   return {
