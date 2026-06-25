@@ -34,36 +34,48 @@ function buildMultipart(fields) {
   };
 }
 
-function catboxRequest(multipartBody, contentType) {
+function requestHTTPS(options, body) {
   return new Promise((resolve, reject) => {
-    const req = https.request(
-      {
-        hostname: CATBOX_HOST,
-        path: CATBOX_PATH,
-        method: "POST",
-        headers: {
-          "Content-Type": contentType,
-          "Content-Length": multipartBody.length,
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        },
-      },
-      (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => resolve(data.trim()));
-      }
-    );
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => resolve(data.trim()));
+    });
     req.on("error", reject);
-    req.write(multipartBody);
+    if (body) req.write(body);
     req.end();
   });
 }
 
 exports.handler = async () => {
   const testFile = Buffer.from("Hello World from ASCloud Netlify test");
-  
   const results = {};
-  
+
+  // Test 0x0.st
+  try {
+    const mp = buildMultipart([
+      {
+        name: "file",
+        file: testFile,
+        filename: "test.txt",
+        contentType: "text/plain",
+      },
+    ]);
+    results.st0x0 = await requestHTTPS({
+      hostname: "0x0.st",
+      path: "/",
+      method: "POST",
+      headers: {
+        "Content-Type": mp.contentType,
+        "Content-Length": mp.body.length,
+        "User-Agent": "ASCloud/2.0",
+      }
+    }, mp.body);
+  } catch (err) {
+    results.st0x0_error = err.message;
+  }
+
+  // Test Catbox
   try {
     const mp1 = buildMultipart([
       { name: "reqtype", value: "fileupload" },
@@ -75,24 +87,18 @@ exports.handler = async () => {
         contentType: "text/plain",
       },
     ]);
-    results.test1 = await catboxRequest(mp1.body, mp1.contentType);
+    results.catbox = await requestHTTPS({
+      hostname: CATBOX_HOST,
+      path: CATBOX_PATH,
+      method: "POST",
+      headers: {
+        "Content-Type": mp1.contentType,
+        "Content-Length": mp1.body.length,
+        "User-Agent": "ASCloud/2.0",
+      }
+    }, mp1.body);
   } catch (err) {
-    results.test1_error = err.message;
-  }
-
-  try {
-    const mp2 = buildMultipart([
-      { name: "reqtype", value: "fileupload" },
-      {
-        name: "fileToUpload",
-        file: testFile,
-        filename: "test2.txt",
-        contentType: "text/plain",
-      },
-    ]);
-    results.test2 = await catboxRequest(mp2.body, mp2.contentType);
-  } catch (err) {
-    results.test2_error = err.message;
+    results.catbox_error = err.message;
   }
 
   return {
