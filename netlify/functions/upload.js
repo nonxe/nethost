@@ -1,4 +1,45 @@
-const CATBOX_API = "https://apis.davidcyril.name.ng/uploader/catbox";
+const CATBOX_OFFICIAL = "https://catbox.moe/user/api.php";
+const CATBOX_WRAPPER = "https://apis.davidcyril.name.ng/uploader/catbox";
+
+/**
+ * Try to extract a catbox URL from the API response text.
+ * Returns the clean filename or throws on failure.
+ */
+function extractFilename(responseText) {
+  // 1. Try regex match for a catbox URL anywhere in the response
+  const match = responseText.match(
+    /https?:\/\/files\.catbox\.moe\/([A-Za-z0-9_\-]+\.[A-Za-z0-9]+)/
+  );
+  if (match) return match[1];
+
+  // 2. If the entire response is a clean URL
+  const trimmed = responseText.trim();
+  if (
+    trimmed.startsWith("http") &&
+    !trimmed.includes("<") &&
+    trimmed.includes("/")
+  ) {
+    return trimmed.split("/").pop();
+  }
+
+  return null;
+}
+
+/**
+ * Upload to catbox using the official API.
+ */
+async function uploadOfficial(formData) {
+  const r = await fetch(CATBOX_OFFICIAL, { method: "POST", body: formData });
+  return (await r.text()).trim();
+}
+
+/**
+ * Upload to catbox using the wrapper API (fallback).
+ */
+async function uploadWrapper(formData) {
+  const r = await fetch(CATBOX_WRAPPER, { method: "POST", body: formData });
+  return (await r.text()).trim();
+}
 
 exports.handler = async (event) => {
   const headers = {
@@ -26,9 +67,10 @@ exports.handler = async (event) => {
   try {
     const ct =
       event.headers["content-type"] || event.headers["Content-Type"] || "";
-    let responseText;
+    let filename = null;
 
     if (ct.includes("application/json")) {
+      /* ── URL Upload ── */
       const { url } = JSON.parse(event.body);
       if (!url) {
         return {
@@ -37,48 +79,70 @@ exports.handler = async (event) => {
           body: JSON.stringify({ error: "No URL provided" }),
         };
       }
-      const fd = new FormData();
-      fd.append("url", url);
-      const r = await fetch(CATBOX_API, { method: "POST", body: fd });
-      responseText = (await r.text()).trim();
+
+      // Try official API
+      const fd1 = new FormData();
+      fd1.append("reqtype", "urlupload");
+      fd1.append("url", url);
+      let resp = await uploadOfficial(fd1);
+      filename = extractFilename(resp);
+
+      // Fallback to wrapper
+      if (!filename) {
+        const fd2 = new FormData();
+        fd2.append("url", url);
+        resp = await uploadWrapper(fd2);
+        filename = extractFilename(resp);
+      }
     } else {
-      const filename = decodeURIComponent(
+      /* ── File Upload ── */
+      const uploadName = decodeURIComponent(
         event.headers["x-filename"] ||
           event.headers["X-Filename"] ||
-          "upload"
+          "upload.bin"
       );
       const buf = Buffer.from(
         event.body,
         event.isBase64Encoded ? "base64" : "binary"
       );
       const blob = new Blob([buf], { type: ct || "application/octet-stream" });
-      const fd = new FormData();
-      fd.append("file", blob, filename);
-      const r = await fetch(CATBOX_API, { method: "POST", body: fd });
-      responseText = (await r.text()).trim();
+
+      // Try official API (field: fileToUpload)
+      const fd1 = new FormData();
+      fd1.append("reqtype", "fileupload");
+      fd1.append("fileToUpload", blob, uploadName);
+      let resp = await uploadOfficial(fd1);
+      filename = extractFilename(resp);
+
+      // Fallback to wrapper (field: file)
+      if (!filename) {
+        const fd2 = new FormData();
+        fd2.append("file", blob, uploadName);
+        resp = await uploadWrapper(fd2);
+        filename = extractFilename(resp);
+      }
     }
 
-    if (
-      !responseText ||
-      (!responseText.includes("http") && !responseText.includes("."))
-    ) {
+    if (!filename) {
       return {
         statusCode: 502,
         headers,
         body: JSON.stringify({
-          error: "Upload service temporarily unavailable",
-          details: responseText,
+          error: "Upload service temporarily unavailable. Please try again.",
         }),
       };
     }
 
-    const fname = responseText.split("/").pop();
-    const cleanUrl = `${proto}://${host}/${fname}`;
+    const cleanUrl = `${proto}://${host}/${filename}`;
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, url: cleanUrl, filename: fname }),
+      body: JSON.stringify({
+        success: true,
+        url: cleanUrl,
+        filename: filename,
+      }),
     };
   } catch (err) {
     return {
