@@ -870,6 +870,20 @@
     }
 
     /* ── Utilities ── */
+    function getFileIcon(name) {
+      const ext = (name || '').split('.').pop().toLowerCase();
+      const map = {
+        jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',bmp:'🖼️',ico:'🖼️',
+        mp4:'🎬',webm:'🎬',mkv:'🎬',avi:'🎬',mov:'🎬',flv:'🎬',
+        mp3:'🎵',wav:'🎵',flac:'🎵',ogg:'🎵',aac:'🎵',m4a:'🎵',
+        pdf:'📄',doc:'📄',docx:'📄',txt:'📄',rtf:'📄',
+        zip:'📦',rar:'📦','7z':'📦',tar:'📦',gz:'📦',
+        js:'💻',py:'💻',html:'💻',css:'💻',json:'💻',
+        apk:'📱',exe:'⚙️',dmg:'💿',iso:'💿',
+      };
+      return map[ext] || '📎';
+    }
+
     function formatSize(bytes) {
       if (!bytes) return '0 B';
       const units = ['B','KB','MB','GB'];
