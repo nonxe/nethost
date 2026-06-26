@@ -1,5 +1,8 @@
 const https = require("https");
 
+const CATBOX_HOST = "catbox.moe";
+const CATBOX_PATH = "/user/api.php";
+
 /**
  * Build multipart/form-data as a raw Buffer.
  */
@@ -35,19 +38,19 @@ function buildMultipart(fields) {
 }
 
 /**
- * Upload to Fileditch using Node.js https module.
+ * Upload to Catbox.
  */
-function fileditchRequest(multipartBody, contentType) {
+function catboxRequest(multipartBody, contentType) {
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
-        hostname: "new.fileditch.com",
-        path: "/upload.php",
+        hostname: CATBOX_HOST,
+        path: CATBOX_PATH,
         method: "POST",
         headers: {
           "Content-Type": contentType,
           "Content-Length": multipartBody.length,
-          "User-Agent": "ASCloud/2.0",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         },
       },
       (res) => {
@@ -63,17 +66,19 @@ function fileditchRequest(multipartBody, contentType) {
 }
 
 /**
- * Extract path from Fileditch response.
+ * Extract filename from Catbox response.
  */
-function extractPath(text) {
-  try {
-    const data = JSON.parse(text);
-    if (data && data.success && data.url) {
-      return data.url.replace("https://fileditchfiles.me/", "");
-    }
-  } catch (e) {
-    const m = text.match(/https?:\/\/fileditchfiles\.me\/([^\s"']+)/);
-    if (m) return m[1];
+function extractFilename(text) {
+  const m = text.match(
+    /https?:\/\/files\.catbox\.moe\/([A-Za-z0-9_\-]+\.[A-Za-z0-9]+)/
+  );
+  if (m) return m[1];
+  const t = text.trim();
+  if (t.startsWith("http") && !t.includes("<") && t.includes("/")) {
+    return t.split("/").pop();
+  }
+  if (t.length > 0 && t.length < 50 && !t.includes("<") && !t.includes(" ") && t.includes(".")) {
+    return t;
   }
   return null;
 }
@@ -95,6 +100,11 @@ module.exports = async (req, res) => {
   const host = req.headers["host"] || req.headers["Host"];
   const proto = req.headers["x-forwarded-proto"] || "https";
 
+  // Sanitize userhash
+  const userhash = (process.env.CATBOX_USERHASH && process.env.CATBOX_USERHASH.trim().length === 32)
+    ? process.env.CATBOX_USERHASH.trim()
+    : "";
+
   try {
     const ct = req.headers["content-type"] || req.headers["Content-Type"] || "";
     let rawResponse;
@@ -104,37 +114,27 @@ module.exports = async (req, res) => {
 
       if (payload.url) {
         /* ── URL Upload ── */
-        const resUrl = await fetch(payload.url);
-        if (!resUrl.ok) {
-          throw new Error(`Failed to fetch remote URL: status ${resUrl.status}`);
-        }
-        const arrayBuf = await resUrl.arrayBuffer();
-        const buf = Buffer.from(arrayBuf);
-        let uploadName = payload.url.split("/").pop().split("?")[0] || "file.bin";
-        const resCt = resUrl.headers.get("content-type") || "application/octet-stream";
-
         const mp = buildMultipart([
-          {
-            name: "file",
-            file: buf,
-            filename: uploadName,
-            contentType: resCt,
-          },
+          { name: "reqtype", value: "urlupload" },
+          ...(userhash ? [{ name: "userhash", value: userhash }] : []),
+          { name: "url", value: payload.url },
         ]);
-        rawResponse = await fileditchRequest(mp.body, mp.contentType);
+        rawResponse = await catboxRequest(mp.body, mp.contentType);
       } else if (payload.fileData) {
         /* ── Base64 File Upload ── */
         const uploadName = payload.filename || "upload.bin";
         const buf = Buffer.from(payload.fileData, "base64");
         const mp = buildMultipart([
+          { name: "reqtype", value: "fileupload" },
+          ...(userhash ? [{ name: "userhash", value: userhash }] : []),
           {
-            name: "file",
+            name: "fileToUpload",
             file: buf,
             filename: uploadName,
             contentType: payload.contentType || "application/octet-stream",
           },
         ]);
-        rawResponse = await fileditchRequest(mp.body, mp.contentType);
+        rawResponse = await catboxRequest(mp.body, mp.contentType);
       } else {
         return res.status(400).json({ error: "Missing url or fileData" });
       }
@@ -160,30 +160,32 @@ module.exports = async (req, res) => {
       );
 
       const mp = buildMultipart([
+        { name: "reqtype", value: "fileupload" },
+        ...(userhash ? [{ name: "userhash", value: userhash }] : []),
         {
-          name: "file",
+          name: "fileToUpload",
           file: buf,
           filename: uploadName,
           contentType: ct || "application/octet-stream",
         },
       ]);
-      rawResponse = await fileditchRequest(mp.body, mp.contentType);
+      rawResponse = await catboxRequest(mp.body, mp.contentType);
     }
 
-    const path = extractPath(rawResponse);
+    const filename = extractFilename(rawResponse);
 
-    if (!path) {
+    if (!filename) {
       return res.status(502).json({
         error: "Upload failed — server returned unexpected response",
         response: rawResponse.substring(0, 500),
       });
     }
 
-    const cleanUrl = `${proto}://${host}/${path}`;
+    const cleanUrl = `${proto}://${host}/${filename}`;
     return res.status(200).json({
       success: true,
       url: cleanUrl,
-      filename: path.split("/").pop(),
+      filename: filename,
     });
   } catch (err) {
     return res.status(500).json({
