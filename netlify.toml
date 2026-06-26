@@ -16,6 +16,11 @@
   status = 200
 
 [[redirects]]
+  from = "/:folder/:subfolder/:filename"
+  to = "https://fileditchfiles.me/:folder/:subfolder/:filename"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "https://files.catbox.moe/:splat"
   status = 200

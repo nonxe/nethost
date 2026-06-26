@@ -852,36 +852,53 @@
       });
     }
 
-    async function uploadSelectedFile() {
+    function uploadSelectedFile() {
       if (!selectedFile) return;
       setUploading(true);
-      try {
-        const base64Data = await fileToBase64(selectedFile);
-        const base64String = base64Data.split(',')[1];
-        
-        const resp = await fetch('/api/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            filename: selectedFile.name,
-            contentType: selectedFile.type || 'application/octet-stream',
-            fileData: base64String
-          }),
-        });
-        const data = await resp.json().catch(() => null);
-        if (!resp.ok || !data || !data.success) {
-          const msg = data ? (data.error || 'Upload failed') : `Server error ${resp.status}`;
-          const detail = data && data.response ? '\n' + data.response : '';
-          throw new Error(msg + detail);
+      
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      // Track progress
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          const progressFill = document.querySelector('.progress-fill');
+          const progressText = document.querySelector('.progress-text');
+          
+          progressFill.style.animation = 'none';
+          progressFill.style.width = percent + '%';
+          progressText.textContent = `Uploading: ${percent}%...`;
         }
-        showResult(data.url);
-      } catch (err) {
-        showError(err.message);
-      } finally {
+      });
+
+      xhr.addEventListener('load', () => {
         setUploading(false);
-      }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data && data.success && data.url) {
+              const localUrl = data.url.replace('https://fileditchfiles.me', window.location.origin);
+              showResult(localUrl);
+            } else {
+              showError(data.error || 'Upload failed');
+            }
+          } catch (e) {
+            showError('Invalid server response');
+          }
+        } else {
+          showError(`Upload failed with status ${xhr.status}`);
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        setUploading(false);
+        showError('Network error occurred during upload');
+      });
+
+      xhr.open('POST', 'https://new.fileditch.com/upload.php');
+      xhr.send(formData);
     }
 
     async function uploadFromUrl() {
@@ -913,7 +930,16 @@
       progress.classList.toggle('show', loading);
       uploadBtn.disabled = loading;
       $('url-upload-btn').disabled = loading;
-      if (loading) hideError();
+      if (loading) {
+        hideError();
+        const progressFill = document.querySelector('.progress-fill');
+        const progressText = document.querySelector('.progress-text');
+        if (progressFill && progressText) {
+          progressFill.style.animation = '';
+          progressFill.style.width = '';
+          progressText.textContent = 'Uploading to servers...';
+        }
+      }
     }
 
     function showResult(url) {

@@ -78,52 +78,41 @@ function extractPath(text) {
   return null;
 }
 
-exports.handler = async (event) => {
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type, X-Filename",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Content-Type": "application/json",
-  };
+module.exports = async (req, res) => {
+  // CORS Headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Filename");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
 
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers, body: "" };
-  }
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: "Method not allowed" }),
-    };
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
   }
 
-  const host = event.headers["host"] || event.headers["Host"];
-  const proto = event.headers["x-forwarded-proto"] || "https";
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const host = req.headers["host"] || req.headers["Host"];
+  const proto = req.headers["x-forwarded-proto"] || "https";
 
   try {
-    const ct =
-      event.headers["content-type"] || event.headers["Content-Type"] || "";
+    const ct = req.headers["content-type"] || req.headers["Content-Type"] || "";
     let rawResponse;
 
     if (ct.includes("application/json")) {
-      const payload = JSON.parse(event.body || "{}");
+      const payload = req.body || {};
+
       if (payload.url) {
         /* ── URL Upload ── */
-        // 1. Fetch the remote URL
         const resUrl = await fetch(payload.url);
         if (!resUrl.ok) {
           throw new Error(`Failed to fetch remote URL: status ${resUrl.status}`);
         }
-        
-        // 2. Read as array buffer and convert to Buffer
         const arrayBuf = await resUrl.arrayBuffer();
         const buf = Buffer.from(arrayBuf);
-        
-        // 3. Extract filename from URL
         let uploadName = payload.url.split("/").pop().split("?")[0] || "file.bin";
         const resCt = resUrl.headers.get("content-type") || "application/octet-stream";
-        
-        // 4. Build multipart and upload to Fileditch
+
         const mp = buildMultipart([
           {
             name: "file",
@@ -147,23 +136,29 @@ exports.handler = async (event) => {
         ]);
         rawResponse = await fileditchRequest(mp.body, mp.contentType);
       } else {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: "Missing url or fileData" }),
-        };
+        return res.status(400).json({ error: "Missing url or fileData" });
       }
     } else {
       /* ── Raw File Upload Fallback ── */
+      let buf;
+      if (Buffer.isBuffer(req.body)) {
+        buf = req.body;
+      } else if (typeof req.body === "string") {
+        buf = Buffer.from(req.body, "binary");
+      } else {
+        buf = await new Promise((resolve) => {
+          const chunks = [];
+          req.on("data", (chunk) => chunks.push(chunk));
+          req.on("end", () => resolve(Buffer.concat(chunks)));
+        });
+      }
+
       const uploadName = decodeURIComponent(
-        event.headers["x-filename"] ||
-          event.headers["X-Filename"] ||
+        req.headers["x-filename"] ||
+          req.headers["X-Filename"] ||
           "upload.bin"
       );
-      const buf = Buffer.from(
-        event.body,
-        event.isBase64Encoded ? "base64" : "binary"
-      );
+
       const mp = buildMultipart([
         {
           name: "file",
@@ -178,33 +173,21 @@ exports.handler = async (event) => {
     const path = extractPath(rawResponse);
 
     if (!path) {
-      return {
-        statusCode: 502,
-        headers,
-        body: JSON.stringify({
-          error: "Upload failed — server returned unexpected response",
-          response: rawResponse.substring(0, 500),
-        }),
-      };
+      return res.status(502).json({
+        error: "Upload failed — server returned unexpected response",
+        response: rawResponse.substring(0, 500),
+      });
     }
 
     const cleanUrl = `${proto}://${host}/${path}`;
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        url: cleanUrl,
-        filename: path.split("/").pop(),
-      }),
-    };
+    return res.status(200).json({
+      success: true,
+      url: cleanUrl,
+      filename: path.split("/").pop(),
+    });
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: "Upload failed — " + err.message,
-      }),
-    };
+    return res.status(500).json({
+      error: "Upload failed — " + err.message,
+    });
   }
 };

@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/upload",
+      "destination": "/api/upload"
+    },
+    {
+      "source": "/:folder/:subfolder/:filename",
+      "destination": "https://fileditchfiles.me/:folder/:subfolder/:filename"
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://files.catbox.moe/:path*"
+    }
+  ]
+}
