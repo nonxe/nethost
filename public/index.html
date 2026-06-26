@@ -890,11 +890,15 @@
             }
           } else {
             let errorMsg = 'Upload failed';
+            let detail = '';
             try {
               const data = JSON.parse(xhr.responseText);
               errorMsg = data.error || errorMsg;
+              if (data.response) {
+                detail = ' - ' + data.response;
+              }
             } catch (e) {}
-            showError(`${errorMsg} (${xhr.status})`);
+            showError(`${errorMsg}${detail} (${xhr.status})`);
           }
         });
 
